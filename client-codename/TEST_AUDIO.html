@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>בדיקת צלילים</title>
+</head>
+<body>
+    <h1>בדיקת צלילים</h1>
+    <button onclick="testSound('success')">נסה success.mp3</button>
+    <button onclick="testSound('card-click')">נסה card-click.mp3</button>
+    <button onclick="testSound('victory')">נסה victory.mp3</button>
+    
+    <div id="log"></div>
+    
+    <script>
+        function testSound(soundName) {
+            const audio = new Audio(`/sounds/${soundName}.mp3`);
+            const log = document.getElementById('log');
+            
+            audio.addEventListener('loadstart', () => {
+                log.innerHTML += `<p>🔄 Loading: ${soundName}.mp3</p>`;
+            });
+            
+            audio.addEventListener('canplay', () => {
+                log.innerHTML += `<p>✅ Ready: ${soundName}.mp3</p>`;
+            });
+            
+            audio.addEventListener('error', (e) => {
+                log.innerHTML += `<p>❌ Error: ${soundName}.mp3 - ${e.message}</p>`;
+            });
+            
+            audio.play().then(() => {
+                log.innerHTML += `<p>🔊 Playing: ${soundName}.mp3</p>`;
+            }).catch((error) => {
+                log.innerHTML += `<p>❌ Failed to play: ${soundName}.mp3 - ${error}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>

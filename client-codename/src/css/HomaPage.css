@@ -1,0 +1,55 @@
+/* עיצוב כללי */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #4facfe, #00f2fe); /* רקע מגניב */
+  color: white;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+
+.home-header h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  color: #ffffff; /* לבן נקי */
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* צל לכותרת */
+}
+
+.home-header p {
+  font-size: 1.2rem;
+  color: #ddd;
+}
+
+/* עיצוב הכפתורים */
+.home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.home-button {
+  padding: 12px 24px;
+  background-color: #07ba40;
+  color: white;
+  font-size: 1.2rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.home-button:hover {
+  background-color: #52db64;
+}
+
+/* עיצוב הפוטר */
+.home-footer {
+  margin-top: 50px;
+  font-size: 0.9rem;
+  color: #aaa;
+}

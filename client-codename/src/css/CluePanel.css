@@ -1,0 +1,32 @@
+.clue-panel {
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08), 0 1.5px 4px 0 rgba(0,0,0,0.04);
+  background: rgba(255,255,255,0.97);
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  padding: 1.2rem 1rem;
+  margin: 0 auto;
+}
+.clue-panel input,
+.clue-panel select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  background: #fff;
+  transition: border 0.2s;
+}
+.clue-panel input:focus,
+.clue-panel select:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+.clue-panel button {
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px 0 rgba(59,130,246,0.08);
+}
+.clue-panel button:hover {
+  background: #2563eb;
+} 

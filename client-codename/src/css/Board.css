@@ -1,0 +1,22 @@
+.board-container {
+  /* 1) GRID רספונסיבי */
+  display: grid;
+  /* בכל רוחב: כמה עמודות שייכנסו, כל כרטיס לפחות 110px */
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+
+  /* 2) רווחים אופקיים ואנכיים אחידים */
+  column-gap: 8px;   /* רווח בין עמודות */
+  row-gap: 6px;      /* רווח בין שורות */
+
+  /* 3) הלוח נדחף למעלה – עודף-גובה נשאר מתחתיו */
+  align-content: flex-start;
+
+  /* 4) יישור ואילוצים כלליים */
+  justify-content: center;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem;
+
+  /* 5) אם אתה חייב למנוע גלילת-Y פנימית – תשאיר; אחרת אפשר למחוק */
+  overflow-y: hidden;
+}

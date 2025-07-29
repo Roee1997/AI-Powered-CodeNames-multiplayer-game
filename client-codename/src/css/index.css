@@ -1,0 +1,441 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* תיקון בעיית גלילה */
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  overflow-y: visible;
+  background-color: #000; /* אם יש צורך ברקע כהה קבוע */
+}
+
+/* כותרת עליונה */
+.Header {
+  margin-bottom: 20px;
+}
+
+/* ===== עיצוב חדש לעמוד חברים - גרסה קלאסית ===== */
+
+.friends-section-box, .requests-section-box {
+  background: rgba(255,255,255,0.92);
+  border-radius: 22px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 24px 18px 18px 18px;
+  margin-bottom: 18px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #3b3b3b;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+}
+
+.section-header .emoji {
+  font-size: 1.5rem;
+  margin-left: 8px;
+}
+
+.friend-card {
+  background: linear-gradient(135deg, #f8fafc 80%, #e9e9ff 100%);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  padding: 16px 12px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1px solid #f0f0f0;
+}
+.friend-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.friend-card .user-avatar {
+  margin-left: 14px;
+}
+
+.friend-card .btn-success,
+.friend-card .btn-danger {
+  font-size: 0.95rem;
+  padding: 6px 14px;
+  min-width: 70px;
+  border-radius: 18px;
+  margin-left: 0.25rem;
+  margin-right: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.friend-card .btn-success {
+  background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
+  color: #fff;
+  border: none;
+}
+.friend-card .btn-danger {
+  background: linear-gradient(135deg, #ff5858 0%, #f857a6 100%);
+  color: #fff;
+  border: none;
+}
+
+.friend-card .btn-success:hover,
+.friend-card .btn-danger:hover {
+  filter: brightness(1.08);
+  transform: scale(1.04);
+}
+
+.friend-card .flex.space-x-2,
+.friend-card .flex.space-x-reverse {
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
+  min-width: 120px;
+}
+
+/* חיפוש */
+.friend-search-bar {
+  background: rgba(255,255,255,0.98);
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.friend-search-bar input {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  flex: 1;
+  outline: none;
+  color: #222;
+}
+.friend-search-bar .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 18px;
+  padding: 7px 18px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.10);
+  margin: 0;
+}
+.friend-search-bar .btn-primary:hover {
+  filter: brightness(1.08);
+  transform: scale(1.04);
+}
+
+/* empty state */
+.empty-state {
+  text-align: center;
+  padding: 18px 0;
+  color: #888;
+  font-size: 1rem;
+}
+.empty-state .emoji {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* אנימציות */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.friend-item {
+  animation: slideInUp 0.6s ease-out;
+}
+
+/* אינדיקטור הודעות חדשות */
+.unread-indicator {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* אווטאר משתמש */
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  margin-left: 12px;
+}
+
+.user-avatar.small {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.user-avatar.blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.user-avatar.green {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+}
+
+.user-avatar.orange {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* חיפוש משופר */
+.search-input {
+  flex: 1;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-left: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 1);
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+/* כותרות סקציות */
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-shrink: 0;
+}
+
+.section-header .emoji {
+  font-size: 24px;
+  margin-left: 12px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  margin: 0;
+}
+
+/* גלילה בתוך סקציות */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* כפתורים משופרים */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 18px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.10);
+  margin-right: 0.5rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.18);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 18px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(86, 171, 47, 0.10);
+  margin-left: 0.5rem;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(86, 171, 47, 0.18);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 18px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 65, 108, 0.10);
+  margin-left: 0.5rem;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 65, 108, 0.18);
+}
+
+.friend-card .btn-success:last-child,
+.friend-card .btn-danger:last-child {
+  margin-left: 0;
+}
+
+.friend-card .btn-success:first-child,
+.friend-card .btn-danger:first-child {
+  margin-right: 0.25rem;
+}
+
+.friend-card .btn-success:only-child,
+.friend-card .btn-danger:only-child {
+  margin: 0;
+}
+
+/* רספונסיביות */
+@media (max-width: 1024px) {
+  .grid-cols-1.lg\:grid-cols-3 {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .search-section,
+  .pending-section,
+  .friends-section {
+    height: auto;
+    min-height: 300px;
+  }
+  .search-section,
+  .pending-section,
+  .friends-section {
+    margin: 0 0 24px 0;
+    max-width: 100%;
+  }
+  .friends-section-box, .requests-section-box {
+    padding: 14px 6px 10px 6px;
+    border-radius: 12px;
+  }
+  .friend-card {
+    padding: 10px 6px;
+    border-radius: 10px;
+  }
+  .friend-search-bar {
+    padding: 8px 8px;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .search-input {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .friend-card {
+    padding: 16px 8px;
+    border-radius: 14px;
+  }
+  
+  .section-header h2 {
+    font-size: 18px;
+  }
+  
+  .section-header .emoji {
+    font-size: 20px;
+  }
+}
+
+/* ChatWindow input fixes */
+.fixed.bottom-4.left-4 input[type="text"] {
+  color: #111 !important;
+  background: #fff !important;
+}
+.fixed.bottom-4.left-4 input[type="text"]::placeholder {
+  color: #888 !important;
+  opacity: 1;
+}
+
+.chat-header {
+  color: #2563eb;
+  font-weight: bold;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 14rem;
+}

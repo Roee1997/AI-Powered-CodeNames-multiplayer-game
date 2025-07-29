@@ -1,0 +1,111 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin: 0 auto;
+  padding: 20px;
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.card {
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  max-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card.revealed.red {
+  background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+  color: white;
+  border-color: #d63031;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+.card.revealed.blue {
+  background: linear-gradient(145deg, #74b9ff, #0984e3);
+  color: white;
+  border-color: #6c5ce7;
+  box-shadow: 0 4px 12px rgba(116, 185, 255, 0.4);
+}
+
+.card.revealed.neutral {
+  background: linear-gradient(145deg, #fdcb6e, #e17055);
+  color: white;
+  border-color: #d63031;
+}
+
+.card.revealed.assassin {
+  background: linear-gradient(145deg, #2d3436, #636e72);
+  color: white;
+  border-color: #2d3436;
+  box-shadow: 0 4px 12px rgba(45, 52, 54, 0.6);
+}
+
+/* הוספת אנימציות גלובליות */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.game-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.turn-indicator {
+  animation: pulse 2s infinite;
+}
+
+/* שיפור מעברים */
+* {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* אפקט זוהר לרמז חדש */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 40px rgba(255, 255, 255, 0.4);
+  }
+}
+
+.clue-glow {
+  animation: glow 2s ease-in-out;
+}

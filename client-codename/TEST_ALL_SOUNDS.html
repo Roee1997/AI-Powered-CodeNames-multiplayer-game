@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>בדיקת כל הצלילים</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .sound-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .sound-item { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .sound-item button { width: 100%; padding: 5px; margin: 2px 0; }
+        .status { margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+        .found { background-color: #d4edda; }
+        .missing { background-color: #f8d7da; }
+        .fallback { background-color: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🎵 בדיקת כל צלילי המשחק</h1>
+    
+    <div id="summary"></div>
+    
+    <div class="sound-grid" id="soundGrid">
+        <!-- יוצר בצורה דינמית -->
+    </div>
+    
+    <div class="status">
+        <h3>לוג צלילים:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const soundKeys = [
+            'card-click', 'card-reveal', 'card-hover',
+            'turn-change', 'game-start', 'victory', 'defeat',
+            'success', 'error', 'neutral', 'assassin',
+            'button-click', 'button-hover', 'notification', 'team-switch'
+        ];
+
+        const possiblePaths = [
+            '/sounds/',
+            './sounds/',
+            'sounds/',
+            '/public/sounds/',
+            './public/sounds/',
+            'public/sounds/'
+        ];
+
+        let foundSounds = {};
+        let missingSounds = [];
+
+        async function checkAllSounds() {
+            const log = document.getElementById('log');
+            const grid = document.getElementById('soundGrid');
+            
+            log.innerHTML = '<p>🔍 בודק קבצי קול...</p>';
+            
+            // בדיקת כל הקבצים
+            for (const soundKey of soundKeys) {
+                let found = false;
+                
+                for (const basePath of possiblePaths) {
+                    for (const ext of ['mp3', 'wav', 'ogg']) {
+                        const fullPath = `${basePath}${soundKey}.${ext}`;
+                        
+                        try {
+                            const response = await fetch(fullPath, { method: 'HEAD' });
+                            if (response.ok) {
+                                foundSounds[soundKey] = fullPath;
+                                log.innerHTML += `<p class="found">✅ ${soundKey} ← ${fullPath}</p>`;
+                                found = true;
+                                break;
+                            }
+                        } catch (error) {
+                            // Continue checking
+                        }
+                    }
+                    if (found) break;
+                }
+                
+                if (!found) {
+                    missingSounds.push(soundKey);
+                    log.innerHTML += `<p class="missing">❌ ${soundKey} (לא נמצא)</p>`;
+                }
+            }
+            
+            createSoundGrid();
+            updateSummary();
+        }
+
+        function createSoundGrid() {
+            const grid = document.getElementById('soundGrid');
+            grid.innerHTML = '';
+            
+            soundKeys.forEach(soundKey => {
+                const div = document.createElement('div');
+                div.className = 'sound-item';
+                
+                const isFound = foundSounds[soundKey];
+                const className = isFound ? 'found' : 'fallback';
+                div.classList.add(className);
+                
+                div.innerHTML = `
+                    <h4>${soundKey}</h4>
+                    <p>${isFound ? `✅ ${foundSounds[soundKey]}` : '🔄 צליל סינתטי'}</p>
+                    <button onclick="testSound('${soundKey}')">${isFound ? 'נגן קובץ' : 'נגן ביפ'}</button>
+                    <button onclick="testTeamSound('${soundKey}', 'Red')">Red</button>
+                    <button onclick="testTeamSound('${soundKey}', 'Blue')">Blue</button>
+                `;
+                
+                grid.appendChild(div);
+            });
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const foundCount = Object.keys(foundSounds).length;
+            const totalCount = soundKeys.length;
+            const percentage = Math.round((foundCount / totalCount) * 100);
+            
+            summary.innerHTML = `
+                <h2>📊 סיכום: ${foundCount}/${totalCount} קבצים (${percentage}%)</h2>
+                <p><strong>נמצאו:</strong> ${Object.keys(foundSounds).join(', ')}</p>
+                <p><strong>חסרים:</strong> ${missingSounds.join(', ')}</p>
+                <p><strong>צלילים סינתטיים:</strong> ${missingSounds.length > 0 ? 'יופעלו אוטומטית' : 'לא נדרשים'}</p>
+            `;
+        }
+
+        function testSound(soundKey) {
+            const log = document.getElementById('log');
+            const filePath = foundSounds[soundKey];
+            
+            if (filePath) {
+                // נגן קובץ אמיתי
+                const audio = new Audio(filePath);
+                audio.volume = 0.7;
+                
+                audio.play().then(() => {
+                    log.innerHTML += `<p class="found">🔊 ${soundKey}: ${filePath}</p>`;
+                }).catch(error => {
+                    log.innerHTML += `<p class="missing">❌ שגיאה: ${soundKey} - ${error}</p>`;
+                    playFallbackSound(soundKey);
+                });
+            } else {
+                // נגן צליל סינתטי
+                playFallbackSound(soundKey);
+                log.innerHTML += `<p class="fallback">🔊 ${soundKey}: צליל סינתטי</p>`;
+            }
+        }
+
+        function testTeamSound(soundKey, team) {
+            testSound(soundKey); // פשוט נגן את הצליל הרגיל
+        }
+
+        function playFallbackSound(soundKey) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                let frequency = 440;
+                let duration = 100;
+                
+                switch (soundKey) {
+                    case 'card-hover':
+                        frequency = 1200;
+                        duration = 80;
+                        break;
+                    case 'button-hover':
+                        frequency = 1500;
+                        duration = 60;
+                        break;
+                    case 'neutral':
+                        frequency = 440;
+                        duration = 200;
+                        break;
+                    case 'team-switch':
+                        frequency = 600;
+                        duration = 150;
+                        break;
+                    case 'card-click':
+                        frequency = 800;
+                        duration = 100;
+                        break;
+                    case 'card-reveal':
+                        frequency = 600;
+                        duration = 200;
+                        break;
+                    case 'success':
+                        frequency = 523;
+                        duration = 300;
+                        break;
+                    case 'error':
+                        frequency = 300;
+                        duration = 250;
+                        break;
+                    case 'victory':
+                        frequency = 659;
+                        duration = 500;
+                        break;
+                    case 'defeat':
+                        frequency = 220;
+                        duration = 400;
+                        break;
+                    case 'assassin':
+                        frequency = 150;
+                        duration = 600;
+                        break;
+                    case 'button-click':
+                        frequency = 1200;
+                        duration = 80;
+                        break;
+                    case 'notification':
+                        frequency = 880;
+                        duration = 200;
+                        break;
+                    default:
+                        frequency = 440;
+                        duration = 100;
+                }
+
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'triangle';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+                
+            } catch (error) {
+                console.warn('Failed to play fallback sound:', error);
+            }
+        }
+
+        // התחל בדיקה כשהדף נטען
+        window.onload = () => {
+            checkAllSounds();
+        };
+    </script>
+</body>
+</html>

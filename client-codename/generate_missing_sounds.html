@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>יצירת צלילים חסרים</title>
+</head>
+<body>
+    <h1>יצירת צלילים חסרים למשחק</h1>
+    <p>לחץ על הכפתורים כדי ליצור ולהוריד את הצלילים החסרים:</p>
+    
+    <button onclick="generateSound('card-hover', 1200, 80)">צור card-hover.wav</button>
+    <button onclick="generateSound('button-hover', 1500, 60)">צור button-hover.wav</button>
+    <button onclick="generateSound('neutral', 440, 200)">צור neutral.wav</button>
+    <button onclick="generateSound('team-switch', 600, 150)">צור team-switch.wav</button>
+    
+    <div id="status"></div>
+    
+    <script>
+        function generateSound(filename, frequency, duration) {
+            const sampleRate = 44100;
+            const samples = Math.floor(sampleRate * duration / 1000);
+            
+            // יצירת AudioBuffer
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const buffer = audioContext.createBuffer(1, samples, sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // יצירת צליל triangle wave עם envelope
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                const phase = 2 * Math.PI * frequency * t;
+                
+                // Triangle wave
+                let sample = (2 / Math.PI) * Math.asin(Math.sin(phase));
+                
+                // ADSR envelope - קצר מאוד
+                const attackTime = 0.01;
+                const decayTime = 0.02;
+                const releaseTime = 0.02;
+                const totalTime = duration / 1000;
+                
+                let envelope = 1;
+                if (t < attackTime) {
+                    envelope = t / attackTime;
+                } else if (t < attackTime + decayTime) {
+                    envelope = 1 - (t - attackTime) / decayTime * 0.7;
+                } else if (t > totalTime - releaseTime) {
+                    envelope = (totalTime - t) / releaseTime * 0.3;
+                } else {
+                    envelope = 0.3;
+                }
+                
+                data[i] = sample * envelope * 0.1; // נמוך מאוד
+            }
+            
+            // המרה ל-WAV
+            const wav = audioBufferToWav(buffer);
+            
+            // הורדה
+            const blob = new Blob([wav], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename + '.wav';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            document.getElementById('status').innerHTML += `<p>✅ נוצר: ${filename}.wav (${frequency}Hz, ${duration}ms)</p>`;
+        }
+        
+        function audioBufferToWav(buffer) {
+            const length = buffer.length;
+            const arrayBuffer = new ArrayBuffer(44 + length * 2);
+            const view = new DataView(arrayBuffer);
+            const sampleRate = buffer.sampleRate;
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + length * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, length * 2, true);
+            
+            // Convert float samples to 16-bit PCM
+            const data = buffer.getChannelData(0);
+            let offset = 44;
+            for (let i = 0; i < length; i++) {
+                const sample = Math.max(-1, Math.min(1, data[i]));
+                view.setInt16(offset, sample * 0x7FFF, true);
+                offset += 2;
+            }
+            
+            return arrayBuffer;
+        }
+    </script>
+</body>
+</html>

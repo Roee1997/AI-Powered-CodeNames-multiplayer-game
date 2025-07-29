@@ -1,0 +1,90 @@
+/* 1. מניעת גלילה אופקית */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;  /* נמנע גלילה אופקית */
+}
+
+/* 2. Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box; /* מוודא שהpadding והborder לא גורמים לבעיות */
+}
+
+/* 3. הגדרת רווחים */
+body {
+  font-family: 'Arial', sans-serif;  /* או כל פונט אחר שתרצה */
+  line-height: 1.5;
+  background-color: #f0f0f0; /* אפשר לשנות את הצבע לפי הצורך */
+}
+
+/* 4. וודא שהדף מתפשט בצורה נכונה */
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* 5. אלמנטים כלליים */
+.container {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* 6. כלל למניעת בעיות רווחים בצדדים */
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* אם יש אלמנטים נוספים שמייצרים בעיות, אפשר להוסיף להם כללים מותאמים כאן */
+
+/* סגנון לדף הבית */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  text-align: center;
+  width: 100%; /* תופס את כל הרוחב */
+  overflow-x: hidden; /* מונע גלילה אופקית */
+}
+
+/* כותרת */
+.home-header {
+  z-index: 10;
+}
+
+.home-header h1 {
+  color: white;
+  font-size: 6rem;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+/* כפתורים */
+.home-button {
+  background-color: #1d4ed8;
+  color: white;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 25px;
+  margin: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.home-button:hover {
+  background-color: #2563eb;
+}
+
+/* פוטר */
+footer {
+  background-color: #1d4ed8;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  position: relative; /* ✅ שחרר את הפוטר מהתחתית */
+  width: 100%;
+}
