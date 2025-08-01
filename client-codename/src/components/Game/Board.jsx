@@ -1,3 +1,23 @@
+/**
+ * Board Component - רכיב הלוח המרכזי במשחק Codenames
+ * 
+ * אחראי על:
+ * - תצוגת כל הקלפים במערך 5x5 (או 4x5/3x5 במכשירים קטנים)
+ * - ניהול לוגיקת לחיצות על קלפים והחשפת מילים
+ * - סנכרון בזמן אמת עם Firebase לעדכוני מצב הלוח
+ * - ניהול צלילים ואפקטים ויזואליים
+ * - תמיכה בניחושי AI וניחושי שחקנים אמיתיים
+ * - ניתוח דמיון סמנטי במצב המדעי
+ * - מעקב אחר מצב המשחק וקביעת מנצח
+ * 
+ * התכונות המתקדמות:
+ * - מערכת ניתוח ניחושים עם AI embedding analysis
+ * - תמיכה בשני מצבי משחק: קלאסי ומדעי
+ * - אופטימיזציה למכשירים מגוונים עם grid responsive
+ * - מערכת צלילים מתקדמת עם אפקטים שונים לכל סוג ניחוש
+ * - מנגנון heartbeat לזיהוי פעילות שחקנים
+ */
+
 import { useEffect, useState, useRef } from "react";
 import { onValue, ref } from "firebase/database";
 import { toast } from "react-toastify";
@@ -19,32 +39,52 @@ import { analyzeGuess, showGuessAnalysis, isGuessAnalysisAvailable } from "../..
 import Card from "./Card";
 import { useSound } from "../../hooks/useSound";
 
+/**
+ * רכיב הלוח הראשי - מציג את כל קלפי המשחק ומנהל את האינטראקציות
+ * @param {string} gameId - מזהה המשחק
+ * @param {Object} user - פרטי המשתמש הנוכחי  
+ * @param {string} team - שם הצוות (Red/Blue)
+ * @param {boolean} isSpymaster - האם המשתמש הוא מרגל
+ * @param {string} currentTurn - הצוות שתורו לשחק כרגע
+ * @param {string} winner - שם הצוות המנצח (אם יש)
+ * @param {number} turnId - מזהה התור הנוכחי
+ */
 const Board = ({ gameId, user, team, isSpymaster, currentTurn, winner, turnId }) => {
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [guessCount, setGuessCount] = useState(0);
-  const [lastClue, setLastClue] = useState(null);
-  const [gameType, setGameType] = useState("classic");
-  const sound = useSound();
-  const previousClueRef = useRef(null); // לשמירת הרמז הקודם
+  // State management - ניהול מצבי הרכיב
+  const [cards, setCards] = useState([]);           // מערך כל הקלפים
+  const [loading, setLoading] = useState(true);     // מצב טעינה
+  const [guessCount, setGuessCount] = useState(0);  // מספר הניחושים בתור הנוכחי
+  const [lastClue, setLastClue] = useState(null);   // הרמז האחרון שניתן
+  const [gameType, setGameType] = useState("classic"); // סוג המשחק (classic/scientific)
+  
+  // Hooks וחיבורים חיצוניים
+  const sound = useSound();                         // מערכת צלילים
+  const previousClueRef = useRef(null);             // שמירת הרמז הקודם לזיהוי רמזים חדשים
 
+  /**
+   * טוען את נתוני הלוח מהשרת ומציג מידע מפורט למרגלים
+   * כולל רישום מפורט של מצב המשחק לדיבוג ומעקב
+   */
   const fetchBoard = async () => {
     try {
+      // קריאה לשרת לטעינת נתוני הלוח עם פרטי המשתמש
       const res = await fetch(`${API_BASE}/api/games/${gameId}/board/${user.uid}`);
       const data = await res.json();
       setCards(data);
 
-      // 🎯 SPYMASTER BOARD PAYLOAD LOGGING
+      // מערכת רישום מפורטת למרגלים - מציגה את כל המידע הדרוש לניתוח המשחק
       if (isSpymaster && data && data.length > 0) {
         console.log(`\n🎯 ========== SPYMASTER BOARD PAYLOAD ==========`);
         console.log(`🎮 Game ID: ${gameId} | User: ${user.displayName} (${team} Team Spymaster)`);
         
+        // סינון וארגון הקלפים לפי צוותים לתצוגה ברורה
         const redCards = data.filter(c => c.team === 'Red');
         const blueCards = data.filter(c => c.team === 'Blue');
         const neutralCards = data.filter(c => c.team === 'Neutral');
         const assassinCard = data.find(c => c.team === 'Assassin');
         const revealedCards = data.filter(c => c.isRevealed);
         
+        // תצוגה ויזואלית מפורטת של כל המידע
         console.log(`🔴 RED CARDS (${redCards.length}): ${redCards.map(c => `${c.word}${c.isRevealed ? ' ✅' : ''}`).join(', ')}`);
         console.log(`🔵 BLUE CARDS (${blueCards.length}): ${blueCards.map(c => `${c.word}${c.isRevealed ? ' ✅' : ''}`).join(', ')}`);
         console.log(`⚪ NEUTRAL CARDS (${neutralCards.length}): ${neutralCards.map(c => `${c.word}${c.isRevealed ? ' ✅' : ''}`).join(', ')}`);
@@ -60,32 +100,43 @@ const Board = ({ gameId, user, team, isSpymaster, currentTurn, winner, turnId })
     }
   };
 
+  /**
+   * Effect לטעינה ראשונית של הלוח כאשר המשחק והמשתמש מוכנים
+   */
   useEffect(() => {
     if (gameId && user?.uid) fetchBoard();
   }, [gameId, user?.uid]);
 
+  /**
+   * Effect מרכזי לניהול מנויים (subscriptions) בזמן אמת
+   * כולל מעקב אחר עדכוני הלוח, רמזים חדשים וסוג המשחק
+   */
   useEffect(() => {
     if (!gameId || !turnId) return;
+    
+    // מנוי לעדכני הלוח - מתעדכן כל פעם שקלף נחשף
     const unsubBoard = subscribeToBoard(gameId, fetchBoard);
+    
+    // מנוי לרמזים חדשים עם זיהוי חכם של רמזים חדשים אמיתיים
     const unsubClue = subscribeToLastClue(gameId, turnId, (clue) => {
       const previousClue = previousClueRef.current;
       setLastClue(clue);
-      setGuessCount(0);
+      setGuessCount(0); // איפוס מונה הניחושים עבור רמז חדש
       console.log("📥 רמז חדש התקבל:", clue);
       
-      // הפעל צליל רק אם זה רמז חדש אמיתי (לא הטעינה הראשונה)
+      // הפעלת צליל רק אם זה רמז חדש אמיתי (לא טעינה ראשונה)
       if (clue && previousClue && clue.word !== previousClue.word) {
         sound.newClue();
       } else if (clue && !previousClue) {
-        // רמז ראשון - גם נשמיע צליל
+        // רמז ראשון במשחק - גם נשמיע צליל
         sound.newClue();
       }
       
-      // שמור את הרמז הנוכחי לבדיקה הבאה
+      // שמירת הרמז הנוכחי לבדיקה בפעם הבאה
       previousClueRef.current = clue;
     });
 
-    // הרשמה לעדכוני סוג המשחק
+    // מנוי לעדכוני סוג המשחק (קלאסי/מדעי) לתכונות מתקדמות
     const gameTypeRef = ref(db, `games/${gameId}/settings/gameType`);
     const unsubGameType = onValue(gameTypeRef, (snap) => {
       if (snap.exists()) {
@@ -94,6 +145,7 @@ const Board = ({ gameId, user, team, isSpymaster, currentTurn, winner, turnId })
       }
     });
 
+    // ניקוי מנויים בעת הרס הרכיב
     return () => {
       unsubBoard();
       unsubClue();
@@ -101,20 +153,45 @@ const Board = ({ gameId, user, team, isSpymaster, currentTurn, winner, turnId })
     };
   }, [gameId, turnId]);
 
+  /**
+   * פונקציה מרכזית לטיפול בלחיצה על קלף - מנהלת את כל לוגיקת המשחק
+   * תומכת הן בניחושי שחקנים אמיתיים והן בניחושי AI
+   * 
+   * תהליך הפעולה:
+   * 1. אימות תקינות הלחיצה (קלף קיים, לא נחשף, אין מנצח)
+   * 2. בדיקת הרשאות (תור נכון, לא מרגל, יש רמז)  
+   * 3. חשיפת הקלף בשרת ו-Firebase
+   * 4. בדיקת תוצאת הניחוש (נכון/טעות/נייטרלי/מתנקש)
+   * 5. רישום המהלך ושליחת הודעת צ'אט
+   * 6. הפעלת צלילים מתאימים
+   * 7. ניתוח ניחוש במצב מדעי (אם זמין)
+   * 8. בדיקת תנאי ניצחון
+   * 9. החלטה על המשך התור או סיומו
+   * 
+   * @param {Object} card - נתוני הקלף שנלחץ
+   * @param {Object} overrideUser - משתמש חלופי (לניחושי AI)
+   */
   const handleCardClick = async (card, overrideUser = null) => {
+    // שלב 1: בדיקות תקינות בסיסיות
     if (!card || card.isRevealed || winner) return;
 
+    // קביעת המשתמש הפועל (משתמש רגיל או AI)
     const actingUser = overrideUser || user;
 
-    // Send activity heartbeat for human players
+    // שלב 2: שליחת heartbeat עבור שחקנים אמיתיים לזיהוי פעילות
     if (!overrideUser && user?.uid) {
       sendActivityHeartbeat(user.uid, gameId, 'card_click');
     }
 
+    // שלב 3: בדיקת הרשאות עבור שחקנים אמיתיים (AI מקבל חריגה)
     if (!overrideUser) {
+      // בדיקה שזה התור של הצוות ושהמשתמש לא מרגל
       if (team !== currentTurn || isSpymaster) return;
+      
+      // בדיקה שיש רמז תקף מהצוות הנכון
       if (!lastClue || lastClue.team !== currentTurn) return;
 
+      // בדיקה שלא נגמרו הניחושים המותרים
       const maxGuesses = lastClue?.number ?? 0;
       if (guessCount >= maxGuesses) {
         toast.info("🔒 נגמרו הניחושים לתור הזה!");
@@ -122,26 +199,32 @@ const Board = ({ gameId, user, team, isSpymaster, currentTurn, winner, turnId })
       }
     }
 
+    // זיהוי האם זה ניחוש AI או שחקן אמיתי
     const isAIGuess = !!overrideUser;
 
+    // שלב 4: חשיפת הקלף בשרת - עדכון מצב הקלף למצב נחשף
     const res = await fetch(`${API_BASE}/api/games/${gameId}/reveal/${card.cardID}`, { method: "PUT" });
     if (!res.ok) return;
 
+    // שלב 5: עדכון מיידי ב-Firebase וטעינה מחודשת של הלוח
     await updateCardInFirebase(gameId, { ...card, isRevealed: true });
     await fetchBoard();
 
+    // שלב 6: ניתוח תוצאת הניחוש - קביעת סוג הקלף שנחשף
     const cardTeam = card.team?.trim();
-    const correct = cardTeam === currentTurn;
-    const isAssassin = cardTeam === "Assassin";
-    const isOpponent = cardTeam !== currentTurn && cardTeam !== "Neutral" && cardTeam !== "Assassin";
-    const isNeutral = cardTeam === "Neutral";
+    const correct = cardTeam === currentTurn;           // ניחוש נכון - קלף של הצוות
+    const isAssassin = cardTeam === "Assassin";         // מתנקש - סיום מיידי של המשחק
+    const isOpponent = cardTeam !== currentTurn && cardTeam !== "Neutral" && cardTeam !== "Assassin"; // קלף יריב
+    const isNeutral = cardTeam === "Neutral";           // קלף נייטרלי
 
+    // קביעת סוג הניחוש לצורכי רישום וצלילים
     let guessType;
     if (isAssassin) guessType = "assassin";
     else if (isNeutral) guessType = "neutral";
     else if (isOpponent) guessType = "opponent";
     else if (correct) guessType = "correct";
 
+    // שלב 7: רישום המהלך במסד הנתונים לצורכי ניתוח וסטטיסטיקות
     await logMove({
       gameId,
       turnId,
@@ -150,23 +233,27 @@ const Board = ({ gameId, user, team, isSpymaster, currentTurn, winner, turnId })
       result: guessType
     });
 
+    // שלב 8: עיבוד תוצאת הניחוש - רישום ושליחת הודעות
     if (guessType) {
       await logGuessToServer(gameId, actingUser.uid, guessType);
 
+      // מיפוי אמוג'ים לכל סוג ניחוש
       const emojiMap = {
         correct: "🟢",
-        opponent: "🔴",
+        opponent: "🔴", 
         neutral: "🟡",
         assassin: "☠️"
       };
 
+      // מיפוי טקסטים בעברית לכל סוג ניחוש
       const textMap = {
         correct: "צדק!",
         opponent: "טעות",
-        neutral: "נייטרלי",
+        neutral: "נייטרלי", 
         assassin: "מתנקש!"
       };
 
+      // שליחת הודעה לצ'אט המשחק עם פרטי הניחוש
       await sendGuessMessage(gameId, {
         type: "guess",
         username: actingUser.displayName,

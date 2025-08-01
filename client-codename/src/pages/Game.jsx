@@ -1,4 +1,24 @@
-// ✅ קובץ Game.jsx עם תיקון AI לוחש בתור הראשון
+/**
+ * Game Component - דף המשחק הראשי והמרכזי של אפליקציית Codenames
+ * 
+ * אחראי על:
+ * - ניהול כל מצבי המשחק ותיאום בין כל הרכיבים
+ * - סנכרון בזמן אמת עם Firebase לכל היבטי המשחק
+ * - ניהול חיבור מחדש אוטומטי והחלפת AI ↔ שחקנים אמיתיים
+ * - מערכת presence ו-heartbeat לזיהוי ניתוק שחקנים
+ * - אינטגרציה מלאה עם מערכת הבינה המלאכותית
+ * - ניתוח embedding מתקדם במצב המדעי
+ * - ניהול צלילים ואפקטים ויזואליים
+ * - מעקב אחר סטטיסטיקות ואנליטיקה
+ * 
+ * תכונות מתקדמות:
+ * - מערכת היכרות מחדש חכמה שמזהה ניתוקים ומאפשרת חזרה
+ * - ניהול AI אוטומטי שמחליף שחקנים שנותקו ומחזיר אותם בחזרה
+ * - אנליטיקה בזמן אמת עם ניתוח דמיון סמנטי של מילים
+ * - מערכת צלילים מתקדמת עם בקרת מצב משחק
+ * - תמיכה בשני מצבי משחק: קלאסי ומדעי
+ * - ניהול שגיאות מקיף עם התאוששות אוטומטית
+ */
 
 import { onValue, ref, get, set } from "firebase/database";
 import { useEffect, useRef, useState } from "react";
@@ -40,40 +60,59 @@ import { useGameSounds } from "../hooks/useSound";
 import RulesModal from "../components/UI/RulesModal";
 import { BookOpen } from "lucide-react";
 
+/**
+ * רכיב המשחק הראשי - מרכז הקואורדינציה של כל המשחק
+ * מנהל את כל ההיבטים של המשחק כולל מצב, שחקנים, AI, צלילים וניתוח
+ */
 const Game = () => {
-  const { gameId } = useParams();
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  const [turnId, setTurnId] = useState(null);
-  const [isSpymaster, setIsSpymaster] = useState(false);
-  const [team, setTeam] = useState(null);
-  const [clues, setClues] = useState([]);
-  const [currentTurn, setCurrentTurn] = useState(null);
-  const [winner, setWinner] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [boardCards, setBoardCards] = useState([]);
-  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
-  const boardWords = boardCards.map(card => card.word);
-  const guessedCardHandledRef = useRef(false);
-  const aiClueGivenRef = useRef(false);
-  const lastTurnIdRef = useRef(null);
-  const lastTurnTeamRef = useRef(null);
-  const gameEndSoundPlayedRef = useRef(false); // מגן מפני צליל חוזר
-  const gameEndApiCalledRef = useRef(false); // מגן מפני API calls חוזרים
-  const [gameMode, setGameMode] = useState(null);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [isEndingTurn, setIsEndingTurn] = useState(false);
-  const [currentTurnGuessCount, setCurrentTurnGuessCount] = useState(0);
-  const [currentClue, setCurrentClue] = useState(null);
-  
-  // Initialize game sounds with game state tracking
+  // Router וניהול ניווט
+  const { gameId } = useParams();              // מזהה המשחק מה-URL
+  const { user, loading } = useAuth();         // נתוני המשתמש המחובר
+  const navigate = useNavigate();              // לניווט בין דפים
+
+  // State מרכזי של המשחק
+  const [turnId, setTurnId] = useState(null);                    // מזהה התור הנוכחי
+  const [isSpymaster, setIsSpymaster] = useState(false);         // האם המשתמש הוא מרגל
+  const [team, setTeam] = useState(null);                        // הצוות של המשתמש (Red/Blue)
+  const [clues, setClues] = useState([]);                        // היסטוריית רמזים
+  const [currentTurn, setCurrentTurn] = useState(null);          // הצוות שתורו כרגע
+  const [winner, setWinner] = useState(null);                    // הצוות המנצח
+  const [players, setPlayers] = useState([]);                    // רשימת כל השחקנים
+  const [boardCards, setBoardCards] = useState([]);              // כל קלפי הלוח
+  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false); // מצב חלונית החוקים
+
+  // נתונים נגזרים
+  const boardWords = boardCards.map(card => card.word);          // רק המילים מהקלפים
+
+  // Refs למניעת פעולות כפולות ומעקב מצב
+  const guessedCardHandledRef = useRef(false);      // מונע טיפול כפול בניחושים
+  const aiClueGivenRef = useRef(false);             // מונע מתן רמזי AI כפולים
+  const lastTurnIdRef = useRef(null);               // מעקב אחר ID התור הקודם
+  const lastTurnTeamRef = useRef(null);             // מעקב אחר הצוות של התור הקודם
+  const gameEndSoundPlayedRef = useRef(false);      // מגן מפני השמעת צליל סיום כפול
+  const gameEndApiCalledRef = useRef(false);        // מגן מפני קריאות API כפולות לסיום
+
+  // מצבי UI ותכונות מתקדמות
+  const [gameMode, setGameMode] = useState(null);                // מצב המשחק (classic/scientific)
+  const [showAnalysis, setShowAnalysis] = useState(false);       // הצגת פאנל האנליטיקה
+  const [isEndingTurn, setIsEndingTurn] = useState(false);       // מצב של סיום תור
+  const [currentTurnGuessCount, setCurrentTurnGuessCount] = useState(0); // מספר ניחושים בתור
+  const [currentClue, setCurrentClue] = useState(null);          // הרמז הנוכחי
+
+  // מערכת צלילים מתקדמת עם מעקב מצב משחק
   const gameSound = useGameSounds({ 
     gameState: winner ? 'finished' : 'playing', 
     userTeam: team, 
     currentTurn 
   });
   
+  /**
+   * Effect לניתוח embedding של התור הקודם במצב המדעי
+   * מפעיל ניתוח דמיון סמנטי בין רמזים לניחושים שבוצעו
+   * רק במצב scientific ורק כאשר יש מידע נדרש מלא
+   */
   useEffect(() => {
+    // בדיקת תנאים נדרשים לניתוח
     if (
       !gameId ||
       !turnId ||
@@ -84,18 +123,26 @@ const Game = () => {
       gameMode !== "scientific"
     ) return;
   
+    /**
+     * פונקציה פנימית לביצוע ניתוח embedding של התור הקודם
+     * אוספת את כל הניחושים שבוצעו אחרי הרמז ושולחת לניתוח
+     */
     const analyzePreviousTurn = async () => {
       try {
+        // שליפת כל הניחושים מ-Firebase
         const guessesSnap = await get(ref(db, `games/${gameId}/guesses`));
         let guesses = [];
+        
         if (guessesSnap.exists()) {
           const allGuesses = Object.values(guessesSnap.val());
+          // סינון הניחושים שקשורים לרמז הנוכחי (לפי timestamp)
           guesses = allGuesses
             .filter(g => g?.type === "guess" && g?.word && g?.timestamp)
             .filter(g => g.timestamp >= lastClue.timestamp)
             .map(g => g.word);
         }
   
+        // שליחת הנתונים לניתוח embedding
         await sendEmbeddingAnalysis({
           gameId,
           turnId: lastTurnIdRef.current, // התור הקודם
@@ -115,29 +162,42 @@ const Game = () => {
     analyzePreviousTurn();
   }, [turnId]);
 
+  /**
+   * Effect לאתחול המשחק וטעינת הגדרות בסיסיות
+   * מאפס צלילי סיום ומגדיר מעקב אחר סוג המשחק
+   */
   useEffect(() => {
     if (!gameId) return;
     
-    // אפס את מצב צלילי הסיום למשחק חדש
+    // איפוס מצב צלילי הסיום למשחק חדש - למניעת צלילים משחקים קודמים
     resetGameEndState();
     
-    const modeRef = ref(db, `games/${gameId}/settings/gameType`); // ✅ שינוי פה
+    // מעקב אחר סוג המשחק (classic/scientific) מ-Firebase
+    const modeRef = ref(db, `games/${gameId}/settings/gameType`);
     return onValue(modeRef, (snapshot) => {
       setGameMode(snapshot.val());
     });
   }, [gameId]);
 
+  /**
+   * Effect לניהול מזהה התור הנוכחי
+   * מעדכן את המצב המקומי ושומר עותק ב-ref למעקב
+   */
   useEffect(() => {
     if (!gameId) return;
+    
     const turnIdRef = ref(db, `games/${gameId}/currentTurnId`);
     return onValue(turnIdRef, (snapshot) => {
       const newTurnId = snapshot.val();
       setTurnId(newTurnId);
-      lastTurnIdRef.current = newTurnId;
+      lastTurnIdRef.current = newTurnId; // שמירה ב-ref למעקב חיצוני
     });
   }, [gameId]);
 
-  // Find game creator from players data
+  /**
+   * Effect לזיהוי יוצר המשחק מנתוני השחקנים
+   * משמש להרשאות מיוחדות כמו ניהול המשחק
+   */
   useEffect(() => {
     if (!players || players.length === 0) return;
     
@@ -147,27 +207,41 @@ const Game = () => {
     }
   }, [players, user?.uid]);
 
+  // דגל למניעת בדיקות חיבור מחדש מרובות
   const [hasCheckedReconnection, setHasCheckedReconnection] = useState(false);
 
-  // Check for reconnection opportunity only once on first load
+  /**
+   * Effect למערכת חיבור מחדש חכמה - אחת המתכונות המתקדמות ביותר
+   * זוהה שחקן שהתנתק ומזהה אם יש לו אפשרות להתחבר מחדש
+   * מטפל גם בהחלפת AI חזרה לשחקן אמיתי אם נדרש
+   * 
+   * תהליך הפעולה:
+   * 1. בדיקה האם השחקן היה במשחק קודם לכן
+   * 2. הצגת הודעה למשתמש עם אפשרות להתחבר מחדש
+   * 3. שחזור נתוני השחקן (צוות, תפקיד)
+   * 4. הסרת AI שהחליף אותו (אם היה)
+   * 5. הודעת הצלחה למשתמש
+   */
   useEffect(() => {
     if (!gameId || !user?.uid || hasCheckedReconnection) return;
     
     const checkReconnection = async () => {
       try {
+        // בדיקה עם שירות Firebase אם יש אפשרות חיבור מחדש
         const reconnectionData = await checkReconnectionOpportunity(user.uid, gameId);
         
         if (reconnectionData.canReconnect) {
+          // הצגת הודעה למשתמש עם אפשרות בחירה
           const shouldReconnect = window.confirm(reconnectionData.message);
           
           if (shouldReconnect && reconnectionData.playerData) {
-            // Restore player data
+            // שחזור נתוני השחקן המקוריים
             setTeam(reconnectionData.playerData.team);
             setIsSpymaster(reconnectionData.playerData.isSpymaster);
             
-            // If there was an AI replacement, restore human player
+            // טיפול בהחלפת AI חזרה לשחקן אמיתי
             if (reconnectionData.needsAIReplacement) {
-              // Find AI player that replaced this user
+              // זיהוי השחקן AI שהחליף את המשתמש
               const aiPlayerId = `ai-${reconnectionData.playerData.team.toLowerCase()}-${reconnectionData.playerData.isSpymaster ? 'spymaster' : 'operative'}`;
               await restorePlayerFromAI(gameId, user.uid, aiPlayerId);
               toast.success('התחברת מחדש ו-AI הוסר בהצלחה!');
@@ -179,6 +253,7 @@ const Game = () => {
       } catch (error) {
         console.error('Error during reconnection check:', error);
       } finally {
+        // וידוא שהבדיקה תתבצע רק פעם אחת
         setHasCheckedReconnection(true);
       }
     };

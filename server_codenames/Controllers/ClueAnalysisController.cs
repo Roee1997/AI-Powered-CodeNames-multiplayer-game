@@ -6,14 +6,25 @@ using System.Text;
 using System.Text.Json;
 using Accord.Statistics.Analysis;
 
+/// <summary>
+/// קונטרולר לניתוח רמזים ומילים במשחק Codenames באמצעות AI
+/// מספק שירותי embedding, ניתוח איכות רמזים ומשוב על ניחושים
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ClueAnalysisController : ControllerBase
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _config;
+    /// <summary>
+    /// מטמון לשמירת embeddings שכבר נשלפו מ-OpenAI למהירות גישה
+    /// </summary>
     private static readonly Dictionary<string, float[]> _embeddingCache = new Dictionary<string, float[]>();
 
+    /// <summary>
+    /// בונה את הקונטרולר ומאתחל חיבור ל-OpenAI API
+    /// </summary>
+    /// <param name="config">הגדרות התצורה כולל מפתח OpenAI</param>
     public ClueAnalysisController(IConfiguration config)
     {
         _config = config;
@@ -23,6 +34,12 @@ public class ClueAnalysisController : ControllerBase
             new AuthenticationHeaderValue("Bearer", _config["OpenAI:ApiKey"]);
     }
 
+    /// <summary>
+    /// יוצר ניתוח embedding מפורט עם PCA לוויזואליזציה דו-ממדית
+    /// מחשב דמיון קוסינוס ומרחק אוקלידי בין רמז למילים
+    /// </summary>
+    /// <param name="request">בקשת ניתוח המכילה רמז, ניחושים וכל המילים במשחק</param>
+    /// <returns>תוצאות ניתוח עם וקטורים ודמיון למילים</returns>
     [HttpPost("generate")]
     public async Task<IActionResult> GenerateEmbeddingAnalysis([FromBody] AnalysisRequest request)
     {
@@ -71,6 +88,12 @@ public class ClueAnalysisController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// שולף embeddings מ-OpenAI עם מטמון חכם למהירות וחיסכון בעלויות API
+    /// בודק קודם אם מילים כבר קיימות במטמון לפני שליפה מחדש
+    /// </summary>
+    /// <param name="words">רשימת מילים לקבלת embeddings עבורן</param>
+    /// <returns>מילון של מילים ל-embedding vectors או null אם שגיאה</returns>
     private async Task<Dictionary<string, float[]>> GetEmbeddings(List<string> words)
     {
         var embeddings = new Dictionary<string, float[]>();
@@ -147,6 +170,14 @@ public class ClueAnalysisController : ControllerBase
         return embeddings;
     }
 
+    /// <summary>
+    /// מחשב דמיון קוסינוס בין שני וקטורים
+    /// דמיון קוסינוס מוליד בין -1 (הפוך לחלוטין) ל-1 (זהה לחלוטין)
+    /// כולל בדיקות תקינות למניעת שגיאות מחשבים
+    /// </summary>
+    /// <param name="vec1">וקטור ראשון</param>
+    /// <param name="vec2">וקטור שני</param>
+    /// <returns>דמיון קוסינוס בין הוקטורים (0-1)</returns>
     private double CosineSimilarity(float[] vec1, float[] vec2)
     {
         var v1 = Vector<float>.Build.DenseOfArray(vec1);
@@ -174,6 +205,13 @@ public class ClueAnalysisController : ControllerBase
         return similarity;
     }
 
+    /// <summary>
+    /// מחשב מרחק אוקלידי בין שני וקטורים
+    /// מרחק אוקלידי הוא המרחק הישר במרחב רב-ממדי
+    /// </summary>
+    /// <param name="vec1">וקטור ראשון</param>
+    /// <param name="vec2">וקטור שני</param>
+    /// <returns>מרחק אוקלידי בין הוקטורים</returns>
     private double EuclideanDistance(float[] vec1, float[] vec2)
     {
         double sum = 0;
@@ -182,6 +220,12 @@ public class ClueAnalysisController : ControllerBase
         return Math.Sqrt(sum);
     }
 
+    /// <summary>
+    /// מיישם PCA (ניתוח רכיבים עיקריים) לצמצום ממדים ל-2D
+    /// מצמצם את embeddings הרב-ממדיים לנקודות X,Y לתצוגה גרפית
+    /// </summary>
+    /// <param name="vectors">מילון של מילים ל-embedding vectors</param>
+    /// <returns>מילון של מילים לקואורדינטות 2D (x,y)</returns>
     private Dictionary<string, (double x, double y)> ApplyPCA(Dictionary<string, float[]> vectors)
     {
         var wordList = vectors.Keys.ToList();
@@ -212,6 +256,12 @@ public class ClueAnalysisController : ControllerBase
         return result;
     }
 
+    /// <summary>
+    /// מנתח איכות רמז ביחס למילים של הקבוצה, יריבים, ניטראליים ומתנקש
+    /// מחשב ציון איכות עם קנסות ובונוסים ומספק המלצות
+    /// </summary>
+    /// <param name="request">בקשת ניתוח איכות רמז עם כל המילים הרלוונטיות</param>
+    /// <returns>ציון איכות, דמיויות למילים והמלצות לשיפור</returns>
     [HttpPost("clue-quality")]
     public async Task<IActionResult> AnalyzeClueQuality([FromBody] ClueQualityRequest request)
     {
@@ -324,6 +374,15 @@ public class ClueAnalysisController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// מחשב ציון איכות רמז מתוחכם עם קנסות ובונוסים
+    /// ציון בסיסי מדמיון למילים של הקבוצה, עם קנסות על דמיון ליריבים ומתנקש
+    /// </summary>
+    /// <param name="avgTeamSim">דמיון ממוצע למילים של הקבוצה</param>
+    /// <param name="maxOpponentSim">דמיון מקסימלי למילים של היריבים</param>
+    /// <param name="maxNeutralSim">דמיון מקסימלי למילים ניטראליות</param>
+    /// <param name="assassinSim">דמיון למילת המתנקש</param>
+    /// <returns>ציון איכות בטווח 0-100</returns>
     private double CalculateClueQuality(double avgTeamSim, double maxOpponentSim, double maxNeutralSim, double assassinSim)
     {
         // ציון בסיסי מוגדל (0-150) לציונים גבוהים יותר
@@ -365,6 +424,12 @@ public class ClueAnalysisController : ControllerBase
         return finalScore;
     }
 
+    /// <summary>
+    /// קובע רמת סיכון של רמז להת מתנקש או להעניק ליריבים
+    /// </summary>
+    /// <param name="qualityScore">ציון איכות כללי</param>
+    /// <param name="assassinSim">דמיון למתנקש</param>
+    /// <returns>רמת סיכון: high/medium/low</returns>
     private string GetRiskLevel(double qualityScore, double assassinSim)
     {
         if (assassinSim > 0.6) return "high";
@@ -372,6 +437,14 @@ public class ClueAnalysisController : ControllerBase
         return "low";
     }
 
+    /// <summary>
+    /// יוצר הודעת איכות פשוטה וברורה לשחקן
+    /// מתעדפת אזהרות מתנקש ויריבים על פני הערכת איכות כללית
+    /// </summary>
+    /// <param name="qualityScore">ציון איכות כללי</param>
+    /// <param name="assassinSim">דמיון למתנקש</param>
+    /// <param name="maxOpponentSim">דמיון מקסימלי ליריבים</param>
+    /// <returns>הודעה מבוססת emoji עם משוב איכות</returns>
     private string GetSimpleQualityMessage(double qualityScore, double assassinSim, double maxOpponentSim)
     {
         // זהירות מתנקש - העדיפות הגבוהה ביותר (סף מופחת)
@@ -391,6 +464,15 @@ public class ClueAnalysisController : ControllerBase
             return "❌ רמז לא טוב";
     }
 
+    /// <summary>
+    /// יוצר המלצות מפורטות לשיפור רמזים במשחק
+    /// מתמקד באזהרות מסיכונים והצעות לשיפור
+    /// </summary>
+    /// <param name="avgTeamSim">דמיון ממוצע למילים של הקבוצה</param>
+    /// <param name="maxOpponentSim">דמיון מקסימלי ליריבים</param>
+    /// <param name="assassinSim">דמיון למתנקש</param>
+    /// <param name="qualityScore">ציון איכות כללי</param>
+    /// <returns>המלצה מבוססת emoji לשיפור הרמז</returns>
     private string GenerateClueQualitySuggestions(double avgTeamSim, double maxOpponentSim, double assassinSim, double qualityScore)
     {
         if (assassinSim > 0.6)
@@ -407,6 +489,12 @@ public class ClueAnalysisController : ControllerBase
             return "🤔 רמז בסדר, אבל שקול חלופות";
     }
 
+    /// <summary>
+    /// יוצר משוב מפורט על ניחוש שבוצע במשחק
+    /// מחשב דמיון סמנטי, דירוג ומספק תובנות חכמות
+    /// </summary>
+    /// <param name="request">בקשת משוב ניחוש עם מילת רמז, ניחוש ותוצאה</param>
+    /// <returns>דמיון סמנטי, דירוג ותובנות להמשך המשחק</returns>
     [HttpPost("guess-feedback")]
     public async Task<IActionResult> GenerateGuessFeedback([FromBody] GuessFeedbackRequest request)
     {
@@ -476,6 +564,16 @@ public class ClueAnalysisController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// יוצר תובנות חכמות ומותאמות אישית על ניחוש שבוצע
+    /// מסביר את הקשר הסמנטי בין הרמז לניחוש בשפה נגישה
+    /// </summary>
+    /// <param name="guessedWord">המילה שנוחשה</param>
+    /// <param name="clueWord">מילת הרמז</param>
+    /// <param name="similarity">דמיון סמנטי בין המילים</param>
+    /// <param name="ranking">דירוג המילה ביחס לכל המילים</param>
+    /// <param name="guessResult">תוצאת הניחוש (נכון/שגוי/מתנקש)</param>
+    /// <returns>תובנה חכמה ומובנת על הניחוש</returns>
     private string GenerateGuessInsights(string guessedWord, string clueWord, double similarity, int ranking, string guessResult)
     {
         // תובנות מותאמות אישית בהתאם לדמיון ותוצאה
@@ -498,79 +596,148 @@ public class ClueAnalysisController : ControllerBase
     }
 }
 
+/// <summary>
+/// מודל בקשה לניתוח embedding וויזואליזציה של רמז וניחושים
+/// </summary>
 public class AnalysisRequest
 {
+    /// <summary>מזהה ייחודי של המשחק</summary>
     public int GameId { get; set; }
+    /// <summary>מזהה ייחודי של התור</summary>
     public int TurnId { get; set; }
+    /// <summary>מילת הרמז שניתנה</summary>
     public string Clue { get; set; }
+    /// <summary>שם הקבוצה (אדום/כחול)</summary>
     public string Team { get; set; }
+    /// <summary>רשימת הניחושים שבוצעו</summary>
     public List<string> Guesses { get; set; }
+    /// <summary>כל המילים במשחק לניתוח הקשר</summary>
     public List<string> AllWords { get; set; }
 }
 
+/// <summary>
+/// מידע מפורט על מילה והוקטור שלה לצורך וויזואליזציה
+/// </summary>
 public class WordVector
 {
+    /// <summary>המילה עצמה</summary>
     public string Word { get; set; }
+    /// <summary>דמיון קוסינוס לרמז (0-1)</summary>
     public double CosineSimilarity { get; set; }
+    /// <summary>מרחק אוקלידי מהרמז</summary>
     public double EuclideanDistance { get; set; }
+    /// <summary>האם זו מילת הרמז עצמה</summary>
     public bool IsClue { get; set; }
+    /// <summary>האם זו מילה שנוחשה</summary>
     public bool IsGuess { get; set; }
+    /// <summary>קואורדינט X לתצוגה 2D (מ-PCA)</summary>
     public double X { get; set; }
+    /// <summary>קואורדינט Y לתצוגה 2D (מ-PCA)</summary>
     public double Y { get; set; }
 }
 
+/// <summary>
+/// תוצאות ניתוח embedding עם כל המידע הנדרש לוויזואליזציה
+/// </summary>
 public class AnalysisResponse
 {
+    /// <summary>מזהה המשחק</summary>
     public int GameId { get; set; }
+    /// <summary>מזהה התור</summary>
     public int TurnId { get; set; }
+    /// <summary>שם הקבוצה</summary>
     public string Team { get; set; }
+    /// <summary>מילת הרמז</summary>
     public string Clue { get; set; }
+    /// <summary>רשימת הניחושים</summary>
     public List<string> Guesses { get; set; }
+    /// <summary>כל המילים עם הנתונים המתמטיים שלהן</summary>
     public List<WordVector> Vectors { get; set; }
 }
 
+/// <summary>
+/// מודל בקשה לקבלת משוב על ניחוש שבוצע במשחק
+/// </summary>
 public class GuessFeedbackRequest
 {
+    /// <summary>מזהה המשחק</summary>
     public int GameId { get; set; }
+    /// <summary>המילה שנוחשה על ידי השחקן</summary>
     public string GuessedWord { get; set; }
+    /// <summary>מילת הרמז שניתנה</summary>
     public string ClueWord { get; set; }
+    /// <summary>כל המילים במשחק לחישוב דירוג</summary>
     public List<string> AllWords { get; set; }
+    /// <summary>תוצאת הניחוש (נכון/שגוי/מתנקש)</summary>
     public string GuessResult { get; set; }
+    /// <summary>שם הקבוצה</summary>
     public string Team { get; set; }
 }
 
+/// <summary>
+/// תוצאות משוב על ניחוש עם נתונים מתמטיים ותובנות
+/// </summary>
 public class GuessFeedbackResponse
 {
+    /// <summary>דמיון סמנטי בין הרמז לניחוש (0-1)</summary>
     public double Similarity { get; set; }
+    /// <summary>דירוג המילה ביחס לכל המילים</summary>
     public int Ranking { get; set; }
+    /// <summary>סה״כ מילים במשחק</summary>
     public int TotalWords { get; set; }
+    /// <summary>תובנות חכמות על הניחוש</summary>
     public string Insights { get; set; }
+    /// <summary>תוצאת הניחוש המקורית</summary>
     public string GuessResult { get; set; }
 }
 
+/// <summary>
+/// מודל בקשה לניתוח איכות רמז ביחס לכל המילים במשחק
+/// </summary>
 public class ClueQualityRequest
 {
+    /// <summary>מילת הרמז לבדיקה</summary>
     public string ClueWord { get; set; }
+    /// <summary>מילים של הקבוצה שלך (חיובי)</summary>
     public List<string> TeamWords { get; set; }
+    /// <summary>מילים של הקבוצה היריבה (שלילי)</summary>
     public List<string> OpponentWords { get; set; }
+    /// <summary>מילים ניטראליות (לא שייכות לאחד)</summary>
     public List<string> NeutralWords { get; set; }
+    /// <summary>מילת המתנקש (מסוכנת ביותר!)</summary>
     public string AssassinWord { get; set; }
 }
 
+/// <summary>
+/// תוצאות ניתוח איכות רמז עם ציון, סיכונים והמלצות
+/// </summary>
 public class ClueQualityResponse
 {
+    /// <summary>מילת הרמז שנבדקה</summary>
     public string ClueWord { get; set; }
+    /// <summary>ציון איכות כללי (0-100)</summary>
     public double QualityScore { get; set; }
+    /// <summary>דמיויות למילים של הקבוצה (טופ 3)</summary>
     public List<WordSimilarity> TeamSimilarities { get; set; }
+    /// <summary>דמיון הכי גבוה ליריבים</summary>
     public double HighestOpponentSimilarity { get; set; }
+    /// <summary>דמיון הכי גבוה לניטראליים</summary>
     public double HighestNeutralSimilarity { get; set; }
+    /// <summary>דמיון למתנקש - הפקטור החשוב ביותר!</summary>
     public double AssassinSimilarity { get; set; }
+    /// <summary>רמת סיכון: low/medium/high</summary>
     public string RiskLevel { get; set; }
+    /// <summary>המלצות והודעות לשחקן</summary>
     public string Suggestions { get; set; }
 }
 
+/// <summary>
+/// דמיון בין מילה לרמז - לשימוש ברשימות דירוג
+/// </summary>
 public class WordSimilarity
 {
+    /// <summary>המילה</summary>
     public string Word { get; set; }
+    /// <summary>דמיון סמנטי לרמז (0-1)</summary>
     public double Similarity { get; set; }
 }

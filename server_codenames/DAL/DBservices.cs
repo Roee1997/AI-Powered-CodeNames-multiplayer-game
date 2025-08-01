@@ -1,4 +1,23 @@
-﻿using server_codenames.BL;
+/**
+ * DBservices - Data Access Layer (DAL) לפרויקט Codenames
+ * 
+ * שכבת הגישה לנתונים המרכזית שמנהלת את כל האינטראקציות עם מסד הנתונים SQL Server
+ * אחראית על:
+ * - ניהול חיבורים למסד הנתונים
+ * - ביצוע כל השאילתות והפרוצדורות המאוחסנות
+ * - המרת נתונים בין אובייקטי C# לטבלאות SQL
+ * - טיפול בשגיאות והגנה על הנתונים
+ * - ניהול נתוני משחקים, שחקנים, רמזים, ניחושים וסטטיסטיקות
+ * 
+ * מתכונות מרכזיות:
+ * - אבטחת נתונים באמצעות Stored Procedures
+ * - ניהול פרמטרים מותאם למניעת SQL Injection
+ * - מערכת סטטיסטיקות מתקדמת לניתוח AI vs Human
+ * - תמיכה בפעולות CRUD מלאות לכל הישויות
+ * - מערכת דיווח מקיפה לשגיאות ולוגים
+ */
+
+using server_codenames.BL;
 using System.Data.SqlClient;
 using System.Data;
 using server_codenames.Controllers;
@@ -6,27 +25,41 @@ using System.Diagnostics;
 
 namespace Server_codenames.DAL
 {
+    /// <summary>
+    /// מחלקת שירותי בסיס הנתונים המרכזית
+    /// מכילה את כל הפונקציות לגישה ועיבוד נתונים במסד SQL Server
+    /// </summary>
     public class DBservices
     {
+        /// <summary>מתאם נתונים SQL לטעינת datasets</summary>
         public SqlDataAdapter da;
+        
+        /// <summary>טבלת נתונים זמנית לעבודה עם תוצאות שאילתות</summary>
         public DataTable dt;
 
+        /// <summary>
+        /// קונסטרקטור ברירת מחדל
+        /// מאתחל את מתאם הנתונים וטבלת הנתונים הזמנית
+        /// </summary>
         public DBservices()
         {
-            //
-            // TODO: Add constructor logic here
-            //
+            // TODO: הוספת לוגיקת אתחול נוספת במידת הצורך
         }
-        //--------------------------------------------------------------------------------------------------
-        // This method creates a connection to the database according to the connectionString name in the web.config 
-        //--------------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// יוצר חיבור למסד הנתונים על בסיס connection string מקובץ ההגדרות
+        /// פונקציה מרכזית שכל שיטות הגישה לנתונים משתמשות בה
+        /// </summary>
+        /// <param name="conString">שם החיבור בקובץ appsettings.json</param>
+        /// <returns>חיבור פתוח למסד הנתונים</returns>
         public SqlConnection connect(String conString)
         {
-
-            // read the connection string from the configuration file
+            // קריאת מחרוזת החיבור מקובץ ההגדרות
             IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build();
             string cStr = configuration.GetConnectionString("myProjDB");
+            
+            // יצירת וההגדרת החיבור
             SqlConnection con = new SqlConnection(cStr);
             con.Open();
             return con;
@@ -36,6 +69,13 @@ namespace Server_codenames.DAL
         // stats
         //--------------------------------------------------------------------------------------------------
 
+/// <summary>
+/// שולף סטטיסטיקות האינטראקציות בין המשתמש לשחקני AI
+/// מחזיר נתונים על דיוק הניחושים של המשתמש מרמזי AI ודיוק AI מרמזי המשתמש
+/// חיוני לניתוח ביצועי AI vs Human בפרספקטיבה אישית
+/// </summary>
+/// <param name="userId">מזהה המשתמש לחישוב הסטטיסטיקות</param>
+/// <returns>אובייקט עם כל הסטטיסטיקות הרלוונטיות</returns>
 public AIStatsDto GetAIStatsForUser(string userId)
 {
     SqlConnection con = connect("myProjDB");
@@ -79,6 +119,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         //--------------------------------------------------------------------------------------------------
 
 
+        /// <summary>
+        /// שומר רמז במסד הנתונים עם כל הפרטים הנלווים
+        /// משמש לשמירת רמזים שניתנו על ידי שחקנים אמיתיים ושחקני AI
+        /// כולל מעקב אחר זמני מתן רמזים לצורכי ניתוח וסטטיסטיקות
+        /// </summary>
+        /// <param name="clue">אובייקט הרמז עם כל הפרטים</param>
+        /// <returns>true אם הרמז נשמר בהצלחה</returns>
         public bool SaveClue(Clue clue)
         {
             SqlConnection con = connect("myProjDB");
@@ -118,6 +165,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         //--------------------------------------------------------------------------------------------------
         // PLAYER IN GAME
         //--------------------------------------------------------------------------------------------------
+        /// <summary>
+        /// מחזיר רשימת כל השחקנים הרשומים למשחק ספציפי
+        /// כולל פרטים על צוות, תפקיד (מרגל/סוכן) ושם משתמש
+        /// חיוני לתצוגת הלובי ולוגיקת ניהול המשחק
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <returns>רשימת שחקנים עם כל הפרטים</returns>
         public List<PlayerInGame> GetPlayersInGame(int gameId)
         {
             List<PlayerInGame> players = new List<PlayerInGame>();
@@ -157,7 +211,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
                     con.Close();
             }
         }
-        // ✅ בדיקה אם משתמש הוא לוחש
+        /// <summary>
+        /// בודק האם משתמש ספציפי הוא מרגל (Spymaster) במשחק נתון
+        /// חשוב לאבטחת המידע - מרגלים רואים את צבעי הקלפים
+        /// משמש לבקרת הרשאות בהצגת המידע
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="userId">מזהה המשתמש לבדיקה</param>
+        /// <returns>true אם המשתמש הוא מרגל</returns>
         public bool IsUserSpymaster(int gameId, string userId)
         {
             SqlConnection con = null;
@@ -180,7 +241,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
                     con.Close();
             }
         }
-        // ✅ Get Board For Player (Spymaster sees teams, Agent only revealed)
+        /// <summary>
+        /// מחזיר את קלפי הלוח במשחק עם רמת מידע המותאמת לתפקיד השחקן
+        /// מרגלים רואים את צבעי כל הקלפים, סוכנים רואים רק קלפים חשופים
+        /// מפעיל stored procedure חכמה שמחליטה מה להציג לפי הרשאות
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="userId">מזהה המשתמש (קובע רמת הרשאות)</param>
+        /// <returns>רשימת קלפים עם רמת מידע מותאמת</returns>
         public List<Card> GetBoardForPlayer(int gameId, string userId)
         {
             List<Card> cards = new List<Card>();
@@ -223,6 +291,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+       /// <summary>
+       /// מחזיר מילים אקראיות ממאגר המילים במסד הנתונים
+       /// תומך בשפות שונות (עברית כברירת מחדל) ובמספר מילים מתכוונן
+       /// משמש ליצירת לוחות משחק חדשים עם מילים שונות בכל פעם
+       /// </summary>
+       /// <param name="count">מספר המילים המבוקש (25 כברירת מחדל)</param>
+       /// <param name="language">קוד השפה (he לעברית)</param>
+       /// <returns>רשימת זוגות של מזהה מילה ומחרוזת המילה</returns>
        public List<(int WordID, string Word)> GetRandomWords(int count = 25, string language = "he")
 {
     SqlConnection con = null;
@@ -260,6 +336,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
 
 
 
+        /// <summary>
+        /// מכניס רשימת קלפים למשחק ספציפי במסד הנתונים
+        /// משמש ליצירת לוח משחק חדש עם הקצאת צוותים וחלוקת תפקידים
+        /// כולל אימות שכל קלף מכיל את הנתונים הנדרשים (WordID, Team)
+        /// </summary>
+        /// <param name="cards">רשימת הקלפים להכנסה</param>
+        /// <returns>true אם כל הקלפים הוכנסו בהצלחה</returns>
         public bool InsertCards(List<Card> cards)
         {
             SqlConnection con = connect("myProjDB");
@@ -297,6 +380,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
                 con.Close();
             }
         }
+        /// <summary>
+        /// מחזיר את כל קלפי המשחק עם המידע המלא (כולל צבעי צוותים)
+        /// משמש בעיקר לשרת ולמערכות ניהול שזקוקות לכל המידע
+        /// שונה מ-GetBoardForPlayer שמסתיר מידע לפי הרשאות
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <returns>רשימת כל הקלפים עם מידע מלא</returns>
         public List<Card> GetCardsForGame(int gameId)
         {
             List<Card> cards = new List<Card>();
@@ -339,6 +429,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// מסמן קלף כחשוף במסד הנתונים
+        /// נקרא כאשר שחקן או AI מנחש מילה ומגלה את הקלף
+        /// פעולה בלתי הפיכה - אין אפשרות להסתיר קלף שנחשף
+        /// </summary>
+        /// <param name="cardId">מזהה הקלף לחשיפה</param>
+        /// <returns>true אם הקלף נחשף בהצלחה</returns>
         public bool RevealCard(int cardId)
         {
             SqlConnection con = connect("myProjDB");
@@ -352,6 +449,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             return affected > 0;
         }
 
+        /// <summary>
+        /// מרשם שחקן למשחק עם בחירת צוות ותפקיד
+        /// כולל אימותים שהמשחק פתוח להצטרפות ושיש מקום בצוות
+        /// מפעיל stored procedure שמטפל בכל הלוגיקה העסקית
+        /// </summary>
+        /// <param name="player">פרטי השחקן להצטרפות</param>
+        /// <returns>true אם ההצטרפות הצליחה</returns>
         public bool JoinGame(PlayerInGame player)
         {
             SqlConnection con;
@@ -392,6 +496,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// מוציא שחקן ממשחק ומנקה את פרטיו
+        /// משמש כאשר שחקן עוזב במהלך שלב ההמתנה או במהלך המשחק
+        /// מפעיל stored procedure שמטפל בניקוי הנתונים
+        /// </summary>
+        /// <param name="player">פרטי השחקן להוצאה</param>
+        /// <returns>true אם השחקן הוצא בהצלחה</returns>
         public bool LeaveGame(PlayerInGame player)
         {
             SqlConnection con;
@@ -433,6 +544,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         }
 
 
+        /// <summary>
+        /// מעדכן פרטי שחקן במשחק (צוות, תפקיד, שם משתמש)
+        /// משמש להחלפת צוותים או תפקידים לפני תחילת המשחק
+        /// לא ניתן לעדכן במהלך משחק פעיל
+        /// </summary>
+        /// <param name="player">פרטי השחקן המעודכנים</param>
+        /// <returns>true אם העדכון הצליח</returns>
         public bool UpdatePlayer(PlayerInGame player)
         {
             SqlConnection con = connect("myProjDB");
@@ -456,6 +574,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         // GAME
         //--------------------------------------------------------------------------------------------------
 
+        /// <summary>
+        /// מחזיר משחק ממתין שיצר המשתמש (אם קיים כזה)
+        /// משמש למניעת יצירת משחקים מרובים על ידי אותו משתמש
+        /// חלק מהלוגיקה העסקית למניעת זבל במסד הנתונים
+        /// </summary>
+        /// <param name="userId">מזהה המשתמש לבדיקה</param>
+        /// <returns>אובייקט משחק ממתין או null אם אין</returns>
         public Game GetUserWaitingGame(string userId)
         {
             SqlConnection con = null;
@@ -492,6 +617,15 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// רושם ניחוש שחקן במסד הנתונים לצורכי סטטיסטיקות
+        /// מתעד האם הניחוש היה נכון, שגוי, נייטרלי או מתנקש
+        /// חשוב למעקב אחר ביצועי שחקנים וחישוב דירוגים
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="userId">מזהה השחקן שניחש</param>
+        /// <param name="guessType">סוג הניחוש (correct/wrong/neutral/assassin)</param>
+        /// <returns>true אם הרישום הצליח</returns>
         public bool LogPlayerGuess(int gameId, string userId, string guessType)
         {
             SqlConnection con = null;
@@ -523,6 +657,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
                     con.Close();
             }
         }
+     /// <summary>
+     /// מחזיר סטטיסטיקות מפורטות על משחק ספציפי
+     /// כולל ניחושים נכונים/שגויים לכל צוות, שחקן מצטיין וזמנים ממוצעים
+     /// משמש לתצוגת סיכום המשחק ולניתוח ביצועים
+     /// </summary>
+     /// <param name="gameId">מזהה המשחק לחישוב סטטיסטיקות</param>
+     /// <returns>אובייקט עם כל הסטטיסטיקות</returns>
      public GameStats GetGameStats(int gameId)
 {
     SqlConnection con = connect("myProjDB");
@@ -564,6 +705,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
         
 
 
+        /// <summary>
+        /// בודק האם משתמש יכול להצטרף למשחק ספציפי
+        /// מאמת שהמשחק פתוח, לא מלא, והמשתמש לא כבר במשחק
+        /// מפעיל stored procedure עם כל בדיקות ההרשאות
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="userId">מזהה המשתמש המבקש להצטרף</param>
+        /// <returns>true אם ההצטרפות מותרת</returns>
         public bool IsGameJoinable(int gameId, string userId)
         {
             SqlConnection con = connect("myProjDB");
@@ -585,6 +734,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             return false;
         }
 
+        /// <summary>
+        /// יוצר משחק חדש במסד הנתונים ומחזיר את מזהה המשחק
+        /// מגדיר מצב התחלתי של "Waiting" ומזהה את יוצר המשחק
+        /// משמש stored procedure עם פרמטר פלט לקבלת המזהה החדש
+        /// </summary>
+        /// <param name="game">אובייקט המשחק עם פרטי יוצר המשחק</param>
+        /// <returns>מזהה המשחק החדש שנוצר</returns>
         public int CreateGame(Game game)
         {
             SqlConnection con;
@@ -633,6 +789,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
         }
 
 
+        /// <summary>
+        /// מעדכן את מצב המשחק (Waiting -> Active -> Finished)
+        /// חלק ממחזור חיי המשחק - עוקב אחר התקדמות המשחק
+        /// מצבים אפשריים: Waiting, Active, Finished
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="status">המצב החדש</param>
+        /// <returns>true אם העדכון הצליח</returns>
         public bool UpdateGameStatus(int gameId, string status)
         {
             SqlConnection con = null;
@@ -664,6 +828,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// מעדכן את הצוות המנצח בסיום המשחק
+        /// נקרא רק כאשר המשחק מסתיים עם מנצח ברור (Red או Blue)
+        /// חלק חיוני ממערכת הסטטיסטיקות והדירוגים
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="winningTeam">שם הצוות המנצח</param>
+        /// <returns>true אם העדכון הצליח</returns>
         public bool UpdateWinningTeam(int gameId, string winningTeam)
         {
             SqlConnection con = null;
@@ -694,6 +866,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// בודק האם המשחק הסתיים (יש מנצח או סטטוס Finished)
+        /// משמש למניעת פעולות על משחקים שהסתיימו
+        /// חשוב למערכת ה-AI למניעת רמזים/ניחושים מיותרים
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק לבדיקה</param>
+        /// <returns>true אם המשחק הסתיים</returns>
         public bool IsGameFinished(int gameId)
         {
             SqlConnection con = null;
@@ -737,6 +916,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// מוסיף שחקן AI למשחק עם ולידציה מקיפה
+        /// מחזיר קודי תוצאה שונים: הצלחה, כשל, משחק מלא וכו'
+        /// משמש timeout מוגדל (30 שניות) לפעולות מורכבות
+        /// </summary>
+        /// <param name="player">פרטי שחקן ה-AI להוספה</param>
+        /// <returns>קוד תוצאה: חיובי=הצלחה, שלילי=כשל עם קוד שגיאה</returns>
         public int AddAIPlayer(PlayerInGame player)
         {
             SqlConnection con = null;
@@ -788,6 +974,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         }
 
 
+        /// <summary>
+        /// מסיר שחקן AI מהמשחק
+        /// משמש כאשר משתמש מחליט להפסיק לשחק עם AI או לשנות הגדרות
+        /// כולל timeout מוגדל להבטחת ביצוע מלא של הפעולה
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="userId">מזהה שחקן ה-AI להסרה</param>
         public void RemoveAIPlayer(int gameId, string userId)
         {
             SqlConnection con = null;
@@ -828,6 +1021,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         //--------------------------------------------------------------------------------------------------
         // USER
         //--------------------------------------------------------------------------------------------------
+        /// <summary>
+        /// רושם משתמש חדש במערכת עם אימות כפילות
+        /// מוודא שכינוי המשתמש והאימייל לא קיימים כבר במערכת
+        /// מחזיר הודעות שגיאה ברורות בעברית למשתמש
+        /// </summary>
+        /// <param name="user">פרטי המשתמש החדש</param>
+        /// <returns>true אם הרישום הצליח</returns>
         public bool RegisterUserDB(server_codenames.BL.Users user)
         {
             SqlConnection con;
@@ -882,6 +1082,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
 
         }
+        /// <summary>
+        /// בודק האם כינוי משתמש כבר קיים במערכת
+        /// משמש לוולידציה בזמן אמת במהלך תהליך הרישום
+        /// מונע רישום כפול ומספק חוויית משתמש חלקה
+        /// </summary>
+        /// <param name="username">כינוי המשתמש לבדיקה</param>
+        /// <returns>true אם הכינוי כבר קיים</returns>
         public bool DoesUsernameExistDB(string username)
         {
             using (var connection = connect("myProjDB"))
@@ -897,6 +1104,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// מחזיר סטטיסטיקות מקיפות של משתמש ספציפי
+        /// כולל נתונים על ניצחונות, הפסדים, דיוק ניחושים ומשחקים אחרונים
+        /// משמש stored procedure שמחזיר מספר תוצאות (Summary + Recent Games)
+        /// </summary>
+        /// <param name="userId">מזהה המשתמש לחישוב סטטיסטיקות</param>
+        /// <returns>אובייקט עם כל הסטטיסטיקות והמשחקים האחרונים</returns>
         public UserStats GetUserStatsDB(string userId)
         {
             using SqlConnection con = connect("myProjDB");
@@ -945,7 +1159,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         //--------------------------------------------------------------------------------------------------
         // FRIENDS
         //--------------------------------------------------------------------------------------------------
-        //find user to add to friend list
+        /// <summary>
+        /// מחפש משתמש לפי שם משתמש או מזהה למטרת הוספה לרשימת חברים
+        /// תומך בחיפוש גמיש - יכול לקבל שם משתמש או מזהה ייחודי
+        /// משמש במערכת החברים לאיתור משתמשים להוספה
+        /// </summary>
+        /// <param name="query">שם משתמש או מזהה לחיפוש</param>
+        /// <returns>אובייקט משתמש או null אם לא נמצא</returns>
         public server_codenames.BL.Users GetUserByUsernameOrID_DB(string query)
         {
             SqlConnection con;
@@ -994,7 +1214,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
-        //create a pending friend request
+        /// <summary>
+        /// שולח בקשת חברות למשתמש אחר
+        /// יוצר רשומה ממתינה במסד הנתונים ומחזיר סטטוס התוצאה
+        /// מטפל במצבים שונים: הצלחה, משתמש לא קיים, בקשה כפולה וכו'
+        /// </summary>
+        /// <param name="senderId">מזהה השולח</param>
+        /// <param name="receiverQuery">מזהה או שם המקבל</param>
+        /// <returns>מחרוזת סטטוס המתארת את תוצאת הפעולה</returns>
         public string SendFriendRequestDB(string senderId, string receiverQuery)
         {
             SqlConnection con;
@@ -1047,7 +1274,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
-        //get pending friend requests to users that I sent them.
+        /// <summary>
+        /// מחזיר רשימת בקשות חברות שהמשתמש שלח ועדיין ממתינות לתשובה
+        /// מסייע למשתמש לעקוב אחר בקשות שטרם אושרו או נדחו
+        /// חלק ממערכת ניהול החברים המקיפה
+        /// </summary>
+        /// <param name="senderId">מזהה המשתמש ששלח את הבקשות</param>
+        /// <returns>רשימת משתמשים שאליהם נשלחו בקשות ממתינות</returns>
         public List<server_codenames.BL.Users> GetPendingFriendRequestsSent(string senderId)
         {
             SqlConnection con;
@@ -1099,6 +1332,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
         }
 
 
+        /// <summary>
+        /// מחזיר רשימת בקשות חברות שהתקבלו וממתינות לאישור המשתמש
+        /// מציג למשתמש מי רוצה להיות חבר שלו
+        /// חלק מתהליך אישור/דחיית בקשות חברות
+        /// </summary>
+        /// <param name="receiverId">מזהה המשתמש המקבל</param>
+        /// <returns>רשימת משתמשים ששלחו בקשות חברות</returns>
         public List<server_codenames.BL.Users> GetPendingFriendRequestsReceived_DB(string receiverId)
         {
             SqlConnection con;
@@ -1147,6 +1387,15 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
+        /// <summary>
+        /// מבטל או דוחה בקשת חברות
+        /// תומך בפעולות שונות: ביטול על ידי השולח, דחיה על ידי המקבל
+        /// מעדכן את סטטוס הבקשה במסד הנתונים בהתאם
+        /// </summary>
+        /// <param name="senderId">מזהה השולח</param>
+        /// <param name="receiverId">מזהה המקבל</param>
+        /// <param name="action">סוג הפעולה (cancel/decline)</param>
+        /// <returns>מחרוזת סטטוס המתארת את תוצאת הפעולה</returns>
         public string CancelFriendRequestDB(string senderId, string receiverId, string action)
         {
             SqlConnection con;
@@ -1180,6 +1429,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
             finally { if (con != null) con.Close(); }
         }
 
+        /// <summary>
+        /// מאשר בקשת חברות ויוצר חברות דו-כיוונית במסד הנתונים
+        /// מבצע שתי פעולות: מעדכן סטטוס בקשה ויוצר קשר חברות
+        /// כולל לוגים מפורטים לצורכי דיבוג ומעקב
+        /// </summary>
+        /// <param name="senderID">מזהה השולח המקורי</param>
+        /// <param name="receiverID">מזהה המאשר את הבקשה</param>
+        /// <returns>מחרוזת סטטוס המתארת את תוצאת הפעולה</returns>
         public string AcceptFriendRequestAndInsertFriendship(string senderID, string receiverID)
         {
             Debug.WriteLine("==> DB Start: AcceptFriendRequestAndInsertFriendship");
@@ -1225,7 +1482,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
-        // Gets list of friends for a given user UID
+        /// <summary>
+        /// מחזיר רשימת כל החברים של משתמש ספציפי
+        /// כולל פרטים על שם משתמש, אימייל ותאריך תחילת החברות
+        /// משמש לתצוגת רשימת החברים באפליקציה
+        /// </summary>
+        /// <param name="userId">מזהה המשתמש</param>
+        /// <returns>רשימת dictionary עם פרטי כל חבר</returns>
         public List<Dictionary<string, object>> GetFriendsByUserID(string userId)
         {
             Debug.WriteLine("==> DB Start: GetFriendsByUserID for userId = " + userId);
@@ -1268,7 +1531,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
             }
         }
 
-        // Removes a friend and updates last FriendRequest to 'Unfriended'
+        /// <summary>
+        /// מוחק חברות קיימת ומעדכן את הסטטוס להסרת חברות
+        /// מבצע שתי פעולות: מוחק את רשומת החברות ומעדכן היסטוריה
+        /// כולל לוגים מפורטים לצורכי מעקב ודיבוג
+        /// </summary>
+        /// <param name="userId">מזהה המשתמש המבקש להסיר</param>
+        /// <param name="friendId">מזהה החבר להסרה</param>
+        /// <returns>מחרוזת סטטוס המתארת את תוצאת הפעולה</returns>
         public string RemoveFriendshipAndUpdateStatus(string userId, string friendId)
         {
             Debug.WriteLine("==> DB Start: RemoveFriendshipAndUpdateStatus");
@@ -1317,6 +1587,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
         // Turn
         //---------------------------------------------------------------------------------
 
+        /// <summary>
+        /// מעביר את התור לצוות הבא ויוצר תור חדש במסד הנתונים
+        /// מטפל במצבים שונים: יצירת תור חדש, תור קיים, קונפליקטים
+        /// מחזיר קודי תוצאה שונים לפי מצב המערכת
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="currentTeam">הצוות שמסיים את התור</param>
+        /// <returns>מזהה התור החדש או null במקרה של כשל</returns>
         public int? SwitchTurn(int gameId, string currentTeam)
         {
             SqlConnection con = connect("myProjDB");
@@ -1363,6 +1641,14 @@ public AIStatsDto GetAIStatsForUser(string userId)
 
 
 
+        /// <summary>
+        /// פותח תור חדש עבור צוות ספציפי
+        /// משמש לתחילת המשחק או לפתיחת תור ראשון
+        /// מוודא שאין תור פתוח כבר קיים לפני יצירת חדש
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <param name="team">הצוות שמתחיל את התור</param>
+        /// <returns>מזהה התור החדש או null אם יש תור פתוח</returns>
         public int? StartTurn(int gameId, string team)
         {
             SqlConnection con = connect("myProjDB");
@@ -1393,6 +1679,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
             return null;
         }
     
+        /// <summary>
+        /// סוגר את התור האחרון הפתוח במשחק
+        /// מסמן את התור כמוגמר ומעדכן זמני סיום
+        /// חלק מתהליך ניהול התורות במשחק
+        /// </summary>
+        /// <param name="gameId">מזהה המשחק</param>
+        /// <returns>true אם התור נסגר בהצלחה</returns>
         public bool EndLatestTurn(int gameId)
         {
             SqlConnection con = connect("myProjDB");
@@ -1411,6 +1704,13 @@ public AIStatsDto GetAIStatsForUser(string userId)
                 //--------------------------------------------------------------------------------------------------
         // MOVES
         //--------------------------------------------------------------------------------------------------
+/// <summary>
+/// רושם מהלך שחקן במסד הנתונים לצורכי מעקב וניתוח
+/// מתעד כל ניחוש עם פרטים על השחקן, המילה והתוצאה
+/// חיוני לחישוב סטטיסטיקות ולניתוח דפוסי משחק
+/// </summary>
+/// <param name="move">פרטי המהלך לרישום</param>
+/// <returns>true אם המהלך נרשם בהצלחה</returns>
 public bool LogMove(MoveRequest move)
 {
     SqlConnection con = connect("myProjDB");
@@ -1444,9 +1744,15 @@ public bool LogMove(MoveRequest move)
 
 
 
-        //---------------------------------------------------------------------------------
-        // Create the SqlCommand using a stored procedure
-        //---------------------------------------------------------------------------------
+        /// <summary>
+        /// יוצר פקודת SQL עם stored procedure ופרמטרים
+        /// פונקציה עזר מרכזית שמשמשת את כל הפונקציות במחלקה
+        /// מגדיר timeout של 30 שניות ומוסיף פרמטרים באופן אוטומטי
+        /// </summary>
+        /// <param name="spName">שם ה-stored procedure</param>
+        /// <param name="con">חיבור פתוח למסד הנתונים</param>
+        /// <param name="paramDic">dictionary עם פרמטרים או null</param>
+        /// <returns>פקודת SQL מוכנה לביצוע</returns>
         private SqlCommand CreateCommandWithStoredProcedure(String spName, SqlConnection con, Dictionary<string, object> paramDic)
         {
 
