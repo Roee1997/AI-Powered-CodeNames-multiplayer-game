@@ -1,4 +1,4 @@
-# CodenamesGame - Advanced Real-time Multiplayer Web Application
+# Codenames Game - Advanced Real-time Multiplayer Web Application
 
 A sophisticated, feature-rich digital implementation of the popular board game **Codenames**, built with modern web technologies and professional-grade architecture. This project showcases advanced real-time multiplayer functionality, AI integration, comprehensive analytics, and social gaming features.
 
@@ -129,7 +129,7 @@ User Action → React Component → Firebase (Real-time) + API Call (Persistent)
 ## Project Structure
 
 ```
-CodenamesGame/
+/
 ├── client-codename/                   # React Frontend Application
 │   ├── src/
 │   │   ├── components/                # Organized React Components
