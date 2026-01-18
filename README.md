@@ -10,8 +10,6 @@ All intellectual property rights to the original Codenames game are fully owned 
 © 2025 Czech Games Edition. All rights reserved.  
 No copyright infringement is intended.
 
-## Screenshots
-
 ### Main Lobby
 ![Main Lobby](client-codename/src/assets/screens/1.lobby.jpeg)
 The home screen where players can start a new game or join an existing one using a game code. Features a clean, spy-themed interface with Hebrew language support.
