@@ -13,6 +13,7 @@ No copyright infringement is intended.
 ![Codenames Game](CodenamesGame/client-codename/public/codename-icon.png)
 
 ## Table of Contents
+- [Screenshots](#screenshots)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Architecture](#architecture)
@@ -27,6 +28,32 @@ No copyright infringement is intended.
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Screenshots
+
+### Main Lobby
+![Main Lobby](client-codename/src/assets/screens/1.lobby.jpeg)
+The home screen where players can start a new game or join an existing one using a game code. Features a clean, spy-themed interface with Hebrew language support.
+
+### Friends Management
+![Friends Page](client-codename/src/assets/screens/2.friends.jpeg)
+Manage your friends list with options to search for users, send/accept friend requests, message friends, and invite them to games. Shows online status and member-since dates.
+
+### Game Lobby
+![Game Lobby](client-codename/src/assets/screens/3.game-lobby.jpeg)
+Pre-game setup room where players join teams (Red/Blue), configure AI spymasters with custom behavior prompts, select game mode (Scientific or Regular Hebrew), and invite friends before starting.
+
+### Gameplay - Hebrew Mode
+![Game Hebrew](client-codename/src/assets/screens/4.game.jpeg)
+Active gameplay with the classic 5x5 word grid in Hebrew. Shows team panels with player roles, revealed cards with color-coded results, turn indicator, timer, and the clue/guess history chat panel.
+
+### Gameplay - English/Scientific Mode
+![Game English](client-codename/src/assets/screens/4.5.game.jpeg)
+English word mode with the "Graphic Analysis" button for accessing word embedding analytics. Same core gameplay with team panels and clue system, designed for scientific analysis features.
+
+### Word Embedding Analysis
+![Word Analysis](client-codename/src/assets/screens/5.words-analyze.jpeg)
+Advanced analytics modal showing PCA-based scatter plot visualization of word similarities to a given clue. Displays cosine similarity and Euclidean distance metrics for each word, helping players understand semantic relationships.
 
 ## Key Features
 
