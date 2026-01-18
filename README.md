@@ -10,25 +10,6 @@ All intellectual property rights to the original Codenames game are fully owned 
 © 2025 Czech Games Edition. All rights reserved.  
 No copyright infringement is intended.
 
-![Codenames Game](CodenamesGame/client-codename/public/codename-icon.png)
-
-## Table of Contents
-- [Screenshots](#screenshots)
-- [Key Features](#key-features)
-- [Technology Stack](#technology-stack)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Game Modes](#game-modes)
-- [AI Integration](#ai-integration)
-- [Analytics & Statistics](#analytics--statistics)
-- [Social Features](#social-features)
-- [Audio System](#audio-system)
-- [Development](#development)
-- [API Documentation](#api-documentation)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## Screenshots
 
 ### Main Lobby
@@ -54,6 +35,22 @@ English word mode with the "Graphic Analysis" button for accessing word embeddin
 ### Word Embedding Analysis
 ![Word Analysis](client-codename/src/assets/screens/5.words-analyze.jpeg)
 Advanced analytics modal showing PCA-based scatter plot visualization of word similarities to a given clue. Displays cosine similarity and Euclidean distance metrics for each word, helping players understand semantic relationships.
+
+## Table of Contents
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Game Modes](#game-modes)
+- [AI Integration](#ai-integration)
+- [Analytics & Statistics](#analytics--statistics)
+- [Social Features](#social-features)
+- [Audio System](#audio-system)
+- [Development](#development)
+- [API Documentation](#api-documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Key Features
 
