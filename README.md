@@ -27,11 +27,11 @@ Pre-game setup room where players join teams (Red/Blue), configure AI spymasters
 Active gameplay with the classic 5x5 word grid in Hebrew. Shows team panels with player roles, revealed cards with color-coded results, turn indicator, timer, and the clue/guess history chat panel.
 
 ### Gameplay - English/Scientific Mode
-![Game English](client-codename/src/assets/screens/4.5.game.jpeg)
+![Game English](client-codename/src/assets/screens/5.game.jpeg)
 English word mode with the "Graphic Analysis" button for accessing word embedding analytics. Same core gameplay with team panels and clue system, designed for scientific analysis features.
 
 ### Word Embedding Analysis
-![Word Analysis](client-codename/src/assets/screens/5.words-analyze.jpeg)
+![Word Analysis](client-codename/src/assets/screens/6.words-analyze.jpeg)
 Advanced analytics modal showing PCA-based scatter plot visualization of word similarities to a given clue. Displays cosine similarity and Euclidean distance metrics for each word, helping players understand semantic relationships.
 
 ## Table of Contents
