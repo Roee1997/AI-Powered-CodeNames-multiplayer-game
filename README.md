@@ -100,13 +100,14 @@ Advanced analytics modal showing PCA-based scatter plot visualization of word si
 |------------|---------|---------|
 | **React** | 19.0.0 | Modern UI framework with concurrent features |
 | **Vite** | 6.2.0 | Next-generation build tool with HMR |
-| **Material-UI** | 7.2.0 | Professional React components |
-| **Tailwind CSS** | 3.4.17 | Utility-first CSS framework |
+| **Tailwind CSS** | 3.4.17 | Primary styling framework (utility-first CSS) |
 | **Framer Motion** | 12.23.3 | Advanced animations and transitions |
+| **Lucide React** | 0.513.0 | Icon library |
 | **Chart.js** | 4.5.0 | Interactive data visualization |
 | **Firebase** | 11.10.0 | Real-time database and authentication |
 | **React Router** | 7.2.0 | Client-side routing |
 | **Axios** | 1.8.4 | HTTP client for API communication |
+| **React Toastify** | 11.0.5 | Toast notifications |
 
 ### **Backend Technologies**
 | Technology | Version | Purpose |
@@ -539,8 +540,9 @@ Based on the original **Codenames** board game by **Vlaada Chvátil**, published
 - **OpenAI**: GPT-4o API for AI intelligence
 - **Firebase**: Real-time database and authentication services
 - **Chart.js**: Data visualization library
-- **Material-UI**: React component library
-- **Tailwind CSS**: Utility-first CSS framework
+- **Tailwind CSS**: Primary styling framework (used across 44 files)
+- **Framer Motion**: Animation library for smooth transitions
+- **Lucide React**: Icon library
 
 ---
 
